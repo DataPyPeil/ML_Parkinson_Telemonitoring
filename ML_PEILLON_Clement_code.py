@@ -101,7 +101,10 @@ plt.show()
 # Analyse outliers if any
 
 
-    
+# Split dataset
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2)
+
 #%% Linear models
 
 # --> peu de correlation lineaire
@@ -130,9 +133,10 @@ def plot_actualVSpredicted(y_gt, y_pred, model_name):
     y_min = y - error
     y_max = y + error
 
-    plt.scatter(y_gt, y_pred, alpha=0.4, s=10)
     plt.plot(x, y, lw=1, ls='-', color='lime')
-    plt.fill_between(x, y_min, y_max, color="lime", alpha=0.2, label="ErrorBand (±5%)")
+    plt.scatter(y_gt, y_pred, alpha=0.4, s=10, edgecolors='none')
+    plt.fill_between(x, y_min, y_max, color="k", alpha=0.2, label="ErrorBand (±5%)")
+    
     
     plt.xlim(0, 1.4)
     plt.ylim(np.min(y_pred)*0.8, np.max(y_pred)*1.2)
@@ -143,18 +147,27 @@ def plot_actualVSpredicted(y_gt, y_pred, model_name):
     plt.legend()
     plt.show()
 
-# Polynomial models
-print('\n--- Polynomial models ---')
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2)
+# # Polynomial models
+# print('\n--- Polynomial models ---')
 
-reg_models = {'Linear':LinearRegression(), 'Ridge':Ridge(), 'Lasso':Lasso()}
+# reg_models = {'Linear':LinearRegression(), 'Ridge':Ridge(), 'Lasso':Lasso()}
 
-for name, reg_model in zip(reg_models.keys(), reg_models.values()):
-    for degree in [1, 3, 5]:
-        model = make_pipeline(PolynomialFeatures(degree), reg_model)
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-        print(f'{name}\tDegree {degree}\tRMSE={RMSE(y_test, y_pred):.2f}\t\tR²={R_squared(y_test, y_pred):.2f}')
-        if name=='Ridge' and degree==5:
-            plot_actualVSpredicted(y_test, y_pred, 'Ridge_5')
+# for name, reg_model in zip(reg_models.keys(), reg_models.values()):
+#     for degree in [1, 3, 5]:
+#         model = make_pipeline(PolynomialFeatures(degree), reg_model)
+#         model.fit(X_train, y_train)
+#         y_pred = model.predict(X_test)
+#         print(f'{name}\tDegree {degree}\tRMSE={RMSE(y_test, y_pred):.2f}\t\tR²={R_squared(y_test, y_pred):.2f}')
+#         if name=='Ridge' and degree==5:
+#             plot_actualVSpredicted(y_test, y_pred, 'Ridge_5')
+            
+# Non parametric KNN            
+from sklearn.neighbors import KNeighborsRegressor
+
+n_neighbors=[3, 5, 7, 9]
+for n in n_neighbors[::-1]:
+    model = KNeighborsRegressor(n, weights='uniform')
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    print(f'KNN\tn_neighbors={n}\tRMSE={RMSE(y_test, y_pred):.2f}\t\tR²={R_squared(y_test, y_pred):.2f}')
+plot_actualVSpredicted(y_test, y_pred, 'KNN_5')
