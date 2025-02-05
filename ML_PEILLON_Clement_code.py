@@ -126,15 +126,15 @@ def R_squared(y_gt, y_pred):
     v1 = ((y_gt[:,1] - y_gt[:,1].mean()) ** 2).sum()
     return np.array([1-u0/v0, 1-u1/v1])
 
-def plot_actualVSpredicted(y_gt, y_pred, model_name):
+def plot_actualVSpredicted(y_gt, y_pred, model_name, rmse, r2):
     y_name = ['motor_UPDRS', 'total_UPDRS']
     plt.figure(figsize=(15,7))
-    plt.title(f'Actual vs Predicted\n{model_name}')
+    plt.title(f'Actual vs Predicted\n{model_name}', fontsize=15)
     
     for k in range(y_test.shape[1]):
         
         plt.subplot(1,2,k+1)
-        plt.title(y_name[k])
+        plt.title(f'{y_name[k]}\nRMSE={rmse[k]:.2f}   |   R²={r2[k]:.2f}')
         x = np.linspace(np.min(y_gt[:,k])*0.7, np.max(y_gt[:,k])*1.3, 50)
         y = x
         error = 0.05 * y
@@ -158,17 +158,18 @@ def plot_actualVSpredicted(y_gt, y_pred, model_name):
 # Polynomial models
 print('\n--- Polynomial models ---')
 
-reg_models = {'Linear':LinearRegression(), 'Ridge':Ridge(), 'Lasso':Lasso()}
+# reg_models = {'Linear':LinearRegression(), 'Ridge':Ridge(), 'Lasso':Lasso(1e-3)}
+reg_models={'Lasso':Lasso(1e-2)}
 
 for name, reg_model in zip(reg_models.keys(), reg_models.values()):
     for degree in [1, 3, 5]:
         model = make_pipeline(PolynomialFeatures(degree), reg_model)
         model.fit(X_train, y_train)
-        y_pred = model.predict(X_test)
-        rmse = RMSE(y_test, y_pred)
-        r2 = R_squared(y_test, y_pred)
+        y_pred = model.predict(X_train)
+        rmse = RMSE(y_train, y_pred)
+        r2 = R_squared(y_train, y_pred)
         print(f'{name}\tDegree {degree}\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f}\tR²={r2[1]:.2f}')
-        plot_actualVSpredicted(y_test, y_pred, f'{name}_{degree}')
+        plot_actualVSpredicted(y_train, y_pred, f'{name}_{degree}', rmse, r2)
    
          
 # Non parametric KNN 
@@ -183,7 +184,7 @@ for n in n_neighbors[::-1]:
     r2 = R_squared(y_test, y_pred)
     print(f'KNN\tn_neighbors={n}\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f}\tR²={r2[1]:.2f}')
     
-plot_actualVSpredicted(y_test, y_pred, 'KNN_5')
+plot_actualVSpredicted(y_test, y_pred, 'KNN_5', rmse, r2)
 
 # SVM Regression
 print('\n--- SVM ---')
@@ -194,9 +195,23 @@ model1.fit(X_train, y_train[:,0])
 model2.fit(X_train, y_train[:,1])
 
 y_pred = np.array([model1.predict(X_test), model2.predict(X_test)]).T
-print(y_pred.shape)
 rmse = RMSE(y_test, y_pred)
 r2 = R_squared(y_test, y_pred)
 print(f'SVM\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f} R²={r2[1]:.2f}')
 
-plot_actualVSpredicted(y_test, y_pred, 'SVM')
+plot_actualVSpredicted(y_test, y_pred, 'SVM', rmse, r2)
+
+# Ensemble method - VotingRegressor
+print('\n--- VotingRegressor ---')
+from sklearn.ensemble import VotingRegressor
+
+model1, model2 = VotingRegressor(), VotingRegressor()
+model1.fit(X_train, y_train[:,0])
+model2.fit(X_train, y_train[:,1])
+
+y_pred = np.array([model1.predict(X_test), model2.predict(X_test)]).T
+rmse = RMSE(y_test, y_pred)
+r2 = R_squared(y_test, y_pred)
+print(f'SVM\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f} R²={r2[1]:.2f}')
+
+plot_actualVSpredicted(y_test, y_pred, 'SVM', rmse, r2)
