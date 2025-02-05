@@ -87,7 +87,6 @@ plt.figure(figsize=(10,10))
 sns.boxplot(X)
 plt.show()
 
-# Analyse outliers if any
 
 # Analyse multivariée
 columns_xy = np.concatenate((columns_modif, y_df.columns.values), axis=0)
@@ -97,11 +96,13 @@ plt.figure(figsize=(15,15))
 plt.title('Matrice de corrélation', fontsize=15)
 sns.heatmap(df_all.corr(), annot=True, fmt='.2f')
 plt.show()
+
+
+# Analyse outliers if any
+
+
+    
+#%% Linear models
+
 # --> peu de correlation lineaire
 # --> do polynomial features + Linear avec Lasso et Ridge regression
-
-
-
-
-    
-    
