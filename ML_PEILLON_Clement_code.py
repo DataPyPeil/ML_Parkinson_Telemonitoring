@@ -102,6 +102,7 @@ plt.show()
 
 
 # Split dataset
+from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2)
 
@@ -111,63 +112,91 @@ X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.
 # --> do polynomial features + Linear avec Lasso et Ridge regression
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.preprocessing import PolynomialFeatures
-from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 
 def RMSE(y_gt, y_pred):
-    mse = np.sum((y_gt-y_pred)**2)
-    return np.sqrt(mse)
+    mse0 = np.sum((y_gt[:,0]-y_pred[:,0])**2)
+    mse1 = np.sum((y_gt[:,1]-y_pred[:,1])**2)
+    return np.sqrt([mse0, mse1])
 
 def R_squared(y_gt, y_pred):
-    u = ((y_gt - y_pred)** 2).sum()
-    v = ((y_gt - y_gt.mean()) ** 2).sum()
-    return 1-u/v
+    u0 = ((y_gt[:,0] - y_pred[:,0])** 2).sum()
+    v0 = ((y_gt[:,0] - y_gt[:,0].mean()) ** 2).sum()
+    u1 = ((y_gt[:,1] - y_pred[:,1])** 2).sum()
+    v1 = ((y_gt[:,1] - y_gt[:,1].mean()) ** 2).sum()
+    return np.array([1-u0/v0, 1-u1/v1])
 
 def plot_actualVSpredicted(y_gt, y_pred, model_name):
-    
-    plt.figure(figsize=(7,7))
+    y_name = ['motor_UPDRS', 'total_UPDRS']
+    plt.figure(figsize=(15,7))
     plt.title(f'Actual vs Predicted\n{model_name}')
-    x = np.linspace(np.min(y_gt)*0.7, np.max(y_gt)*1.3, 50)
-    y = x
-    error = 0.05 * y
-    y_min = y - error
-    y_max = y + error
-
-    plt.plot(x, y, lw=1, ls='-', color='lime')
-    plt.scatter(y_gt, y_pred, alpha=0.4, s=10, edgecolors='none')
-    plt.fill_between(x, y_min, y_max, color="k", alpha=0.2, label="ErrorBand (±5%)")
     
+    for k in range(y_test.shape[1]):
+        
+        plt.subplot(1,2,k+1)
+        plt.title(y_name[k])
+        x = np.linspace(np.min(y_gt[:,k])*0.7, np.max(y_gt[:,k])*1.3, 50)
+        y = x
+        error = 0.05 * y
+        y_min = y - error
+        y_max = y + error
     
-    plt.xlim(0, 1.4)
-    plt.ylim(np.min(y_pred)*0.8, np.max(y_pred)*1.2)
-    plt.xlabel('Actual')
-    plt.ylabel('Predicted')
-    plt.grid(color='grey', linestyle=':', linewidth=0.5)
-    plt.axis('equal')
-    plt.legend()
+        plt.plot(x, y, lw=1, ls='-', color='lime')
+        plt.scatter(y_gt[:,k], y_pred[:,k], color='navy', alpha=0.4, s=10, edgecolors='none')
+        plt.fill_between(x, y_min, y_max, color='darkorange', alpha=0.2, label="ErrorBand (±5%)")
+        
+        
+        plt.xlim(0, 1.4)
+        plt.ylim(np.min(y_pred[:,k])*0.8, np.max(y_pred[:,k])*1.2)
+        plt.xlabel('Actual')
+        plt.ylabel('Predicted')
+        plt.grid(color='grey', linestyle=':', linewidth=0.5)
+        plt.axis('equal')
+        plt.legend()
     plt.show()
 
-# # Polynomial models
-# print('\n--- Polynomial models ---')
+# Polynomial models
+print('\n--- Polynomial models ---')
 
-# reg_models = {'Linear':LinearRegression(), 'Ridge':Ridge(), 'Lasso':Lasso()}
+reg_models = {'Linear':LinearRegression(), 'Ridge':Ridge(), 'Lasso':Lasso()}
 
-# for name, reg_model in zip(reg_models.keys(), reg_models.values()):
-#     for degree in [1, 3, 5]:
-#         model = make_pipeline(PolynomialFeatures(degree), reg_model)
-#         model.fit(X_train, y_train)
-#         y_pred = model.predict(X_test)
-#         print(f'{name}\tDegree {degree}\tRMSE={RMSE(y_test, y_pred):.2f}\t\tR²={R_squared(y_test, y_pred):.2f}')
-#         if name=='Ridge' and degree==5:
-#             plot_actualVSpredicted(y_test, y_pred, 'Ridge_5')
-            
-# Non parametric KNN            
+for name, reg_model in zip(reg_models.keys(), reg_models.values()):
+    for degree in [1, 3, 5]:
+        model = make_pipeline(PolynomialFeatures(degree), reg_model)
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        rmse = RMSE(y_test, y_pred)
+        r2 = R_squared(y_test, y_pred)
+        print(f'{name}\tDegree {degree}\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f}\tR²={r2[1]:.2f}')
+        plot_actualVSpredicted(y_test, y_pred, f'{name}_{degree}')
+   
+         
+# Non parametric KNN 
+print('\n--- KNN ---')           
 from sklearn.neighbors import KNeighborsRegressor
-
 n_neighbors=[3, 5, 7, 9]
 for n in n_neighbors[::-1]:
-    model = KNeighborsRegressor(n, weights='uniform')
+    model = KNeighborsRegressor(n, weights='distance')
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
-    print(f'KNN\tn_neighbors={n}\tRMSE={RMSE(y_test, y_pred):.2f}\t\tR²={R_squared(y_test, y_pred):.2f}')
+    rmse = RMSE(y_test, y_pred)
+    r2 = R_squared(y_test, y_pred)
+    print(f'KNN\tn_neighbors={n}\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f}\tR²={r2[1]:.2f}')
+    
 plot_actualVSpredicted(y_test, y_pred, 'KNN_5')
+
+# SVM Regression
+print('\n--- SVM ---')
+from sklearn.svm import SVR
+
+model1, model2 = SVR(), SVR()
+model1.fit(X_train, y_train[:,0])
+model2.fit(X_train, y_train[:,1])
+
+y_pred = np.array([model1.predict(X_test), model2.predict(X_test)]).T
+print(y_pred.shape)
+rmse = RMSE(y_test, y_pred)
+r2 = R_squared(y_test, y_pred)
+print(f'SVM\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f} R²={r2[1]:.2f}')
+
+plot_actualVSpredicted(y_test, y_pred, 'SVM')
