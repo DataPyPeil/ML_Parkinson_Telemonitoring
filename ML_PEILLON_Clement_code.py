@@ -106,3 +106,55 @@ plt.show()
 
 # --> peu de correlation lineaire
 # --> do polynomial features + Linear avec Lasso et Ridge regression
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+
+def RMSE(y_gt, y_pred):
+    mse = np.sum((y_gt-y_pred)**2)
+    return np.sqrt(mse)
+
+def R_squared(y_gt, y_pred):
+    u = ((y_gt - y_pred)** 2).sum()
+    v = ((y_gt - y_gt.mean()) ** 2).sum()
+    return 1-u/v
+
+def plot_actualVSpredicted(y_gt, y_pred, model_name):
+    
+    plt.figure(figsize=(7,7))
+    plt.title(f'Actual vs Predicted\n{model_name}')
+    x = np.linspace(np.min(y_gt)*0.7, np.max(y_gt)*1.3, 50)
+    y = x
+    error = 0.05 * y
+    y_min = y - error
+    y_max = y + error
+
+    plt.scatter(y_gt, y_pred, alpha=0.4, s=10)
+    plt.plot(x, y, lw=1, ls='-', color='lime')
+    plt.fill_between(x, y_min, y_max, color="lime", alpha=0.2, label="ErrorBand (±5%)")
+    
+    plt.xlim(0, 1.4)
+    plt.ylim(np.min(y_pred)*0.8, np.max(y_pred)*1.2)
+    plt.xlabel('Actual')
+    plt.ylabel('Predicted')
+    plt.grid(color='grey', linestyle=':', linewidth=0.5)
+    plt.axis('equal')
+    plt.legend()
+    plt.show()
+
+# Polynomial models
+print('\n--- Polynomial models ---')
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2)
+
+reg_models = {'Linear':LinearRegression(), 'Ridge':Ridge(), 'Lasso':Lasso()}
+
+for name, reg_model in zip(reg_models.keys(), reg_models.values()):
+    for degree in [1, 3, 5]:
+        model = make_pipeline(PolynomialFeatures(degree), reg_model)
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_test)
+        print(f'{name}\tDegree {degree}\tRMSE={RMSE(y_test, y_pred):.2f}\t\tR²={R_squared(y_test, y_pred):.2f}')
+        if name=='Ridge' and degree==5:
+            plot_actualVSpredicted(y_test, y_pred, 'Ridge_5')
