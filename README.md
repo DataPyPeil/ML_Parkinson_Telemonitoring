@@ -33,3 +33,10 @@ The following machine learning models are implemented and tested:
 ## Acknowledgments
 
 Dataset source: https://archive.ics.uci.edu/dataset/189/parkinsons+telemonitoring
+
+## Getting Started
+
+**Clone the Repository**:
+   ```bash
+   git clone https://github.com/DataPyPeil/ML_Parkinson_Telemonitoring.git
+   cd ML_Parkinson_Telemonitoring
