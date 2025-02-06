@@ -155,21 +155,21 @@ def plot_actualVSpredicted(y_gt, y_pred, model_name, rmse, r2):
         plt.legend()
     plt.show()
 
-# Polynomial models
-print('\n--- Polynomial models ---')
+# # Polynomial models
+# print('\n--- Polynomial models ---')
 
 # reg_models = {'Linear':LinearRegression(), 'Ridge':Ridge(), 'Lasso':Lasso(1e-3)}
-reg_models={'Lasso':Lasso(1e-2)}
+# # reg_models={'Lasso':Lasso(1e-2)}
 
-for name, reg_model in zip(reg_models.keys(), reg_models.values()):
-    for degree in [1, 3, 5]:
-        model = make_pipeline(PolynomialFeatures(degree), reg_model)
-        model.fit(X_train, y_train)
-        y_pred = model.predict(X_train)
-        rmse = RMSE(y_train, y_pred)
-        r2 = R_squared(y_train, y_pred)
-        print(f'{name}\tDegree {degree}\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f}\tR²={r2[1]:.2f}')
-        plot_actualVSpredicted(y_train, y_pred, f'{name}_{degree}', rmse, r2)
+# for name, reg_model in zip(reg_models.keys(), reg_models.values()):
+#     for degree in [1, 3, 5]:
+#         model = make_pipeline(PolynomialFeatures(degree), reg_model)
+#         model.fit(X_train, y_train)
+#         y_pred = model.predict(X_train)
+#         rmse = RMSE(y_train, y_pred)
+#         r2 = R_squared(y_train, y_pred)
+#         print(f'{name}\tDegree {degree}\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f}\tR²={r2[1]:.2f}')
+#         plot_actualVSpredicted(y_train, y_pred, f'{name}_{degree}', rmse, r2)
    
          
 # Non parametric KNN 
@@ -214,37 +214,13 @@ print(f'SVM\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f} 
 
 plot_actualVSpredicted(y_test, y_pred, 'SVM', rmse, r2)
 
-
-# Ensemble method - VotingRegressor - Average
-print('\n--- VotingRegressor ---')
-from sklearn.ensemble import VotingRegressor
-
-model_A = LinearRegression()
-model_B = KNeighborsRegressor(n_neighbors=5)
-model_C = SVR(kernel='rbf')
-
-estimators = [('linear', model_A),
-              ('KNN', model_B),
-              ('SVM', model_C)]
-
-model1, model2 = VotingRegressor(estimators=estimators), VotingRegressor(estimators=estimators)
-model1.fit(X_train, y_train[:,0])
-model2.fit(X_train, y_train[:,1])
-
-y_pred = np.array([model1.predict(X_test), model2.predict(X_test)]).T
-rmse = RMSE(y_test, y_pred)
-r2 = R_squared(y_test, y_pred)
-print(f'SVM\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f} R²={r2[1]:.2f}')
-
-plot_actualVSpredicted(y_test, y_pred, 'VotingRegressor', rmse, r2)
-
 # RandomForest
 print('\n--- RandomForest ---')
 from sklearn.ensemble import RandomForestRegressor
 
 n_estimator=[5, 10, 50, 100]
 for n in n_estimator:
-    model = RandomForestRegressor(n_estimators=n)
+    model = RandomForestRegressor(n_estimators=n, random_state=42)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
     rmse = RMSE(y_test, y_pred)
@@ -254,7 +230,6 @@ for n in n_estimator:
     plot_actualVSpredicted(y_test, y_pred, f'RandomForest_{n}', rmse, r2)
     
     
-    
 # Ensemble method - VotingRegressor - Average
 print('\n--- VotingRegressor ---')
 from sklearn.ensemble import VotingRegressor
@@ -262,10 +237,12 @@ from sklearn.ensemble import VotingRegressor
 model_A = LinearRegression()
 model_B = KNeighborsRegressor(n_neighbors=5)
 model_C = SVR(kernel='rbf')
+model_D = RandomForestRegressor(n_estimators=10)
 
 estimators = [('linear', model_A),
               ('KNN', model_B),
-              ('SVM', model_C)]
+              ('SVM', model_C),
+              ('RF', model_D)]
 
 model1, model2 = VotingRegressor(estimators=estimators), VotingRegressor(estimators=estimators)
 model1.fit(X_train, y_train[:,0])
@@ -274,19 +251,71 @@ model2.fit(X_train, y_train[:,1])
 y_pred = np.array([model1.predict(X_test), model2.predict(X_test)]).T
 rmse = RMSE(y_test, y_pred)
 r2 = R_squared(y_test, y_pred)
-print(f'SVM\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f} R²={r2[1]:.2f}')
+print(f'VotingRegressor\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f} R²={r2[1]:.2f}')
 
 plot_actualVSpredicted(y_test, y_pred, 'VotingRegressor', rmse, r2)
 
+# Ensemble Stacking 
+print('\n--- StackingRegressor ---')
+from sklearn.ensemble import StackingRegressor
+
+model_A = LinearRegression()
+model_B = KNeighborsRegressor(n_neighbors=5)
+model_C = SVR(kernel='rbf')
+model_D = RandomForestRegressor(n_estimators=10)
+
+estimators = [('linear', model_A),
+              ('KNN', model_B),
+              ('SVM', model_C)]
+
+model1, model2 = StackingRegressor(estimators=estimators, final_estimator=model_D), StackingRegressor(estimators=estimators, final_estimator=model_D)
+model1.fit(X_train, y_train[:,0])
+model2.fit(X_train, y_train[:,1])
+
+y_pred = np.array([model1.predict(X_test), model2.predict(X_test)]).T
+rmse = RMSE(y_test, y_pred)
+r2 = R_squared(y_test, y_pred)
+print(f'StackingRegressor\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f} R²={r2[1]:.2f}')
+
+plot_actualVSpredicted(y_test, y_pred, 'StackingRegressor', rmse, r2)
 
 
+# AdaBoost 
+print('\n--- AdaBoost ---')
+from sklearn.ensemble import AdaBoostRegressor
 
+n_estimator=[5, 10, 50, 100]
+for n in n_estimator:
+    estimator = RandomForestRegressor(10)
+    model1, model2 = AdaBoostRegressor(estimator=estimator, n_estimators=n), AdaBoostRegressor(estimator=estimator,n_estimators=n)
+    model1.fit(X_train, y_train[:,0])
+    model2.fit(X_train, y_train[:,1])
 
+    y_pred = np.array([model1.predict(X_test), model2.predict(X_test)]).T
+    rmse = RMSE(y_test, y_pred)
+    r2 = R_squared(y_test, y_pred)
+    print(f'AdaBoost\tn_estimator={n}\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f}\tR²={r2[1]:.2f}')
+    
+    plot_actualVSpredicted(y_test, y_pred, f'AdaBoost{n}', rmse, r2)
+    
 
+# XGBoost
+print('\n--- GradientBoosting ---')
+from sklearn.ensemble import GradientBoostingRegressor
 
+n_estimator=[5, 10, 50, 100, 500]
+for n in n_estimator:
+    model1, model2 = GradientBoostingRegressor(n_estimators=n), GradientBoostingRegressor(n_estimators=n)
+    model1.fit(X_train, y_train[:,0])
+    model2.fit(X_train, y_train[:,1])
 
-
-
+    y_pred = np.array([model1.predict(X_test), model2.predict(X_test)]).T
+    rmse = RMSE(y_test, y_pred)
+    r2 = R_squared(y_test, y_pred)
+    print(f'GradientBoosting\tn_estimator={n}\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f}\tR²={r2[1]:.2f}')
+    
+    plot_actualVSpredicted(y_test, y_pred, f'GradientBoosting{n}', rmse, r2)
+    
 
 
 
