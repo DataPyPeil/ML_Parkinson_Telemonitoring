@@ -187,10 +187,23 @@ for n in n_neighbors[::-1]:
 plot_actualVSpredicted(y_test, y_pred, 'KNN_5', rmse, r2)
 
 # SVM Regression
-print('\n--- SVM ---')
 from sklearn.svm import SVR
+print('\n--- Linear SVM ---')
 
-model1, model2 = SVR(), SVR()
+model1, model2 = SVR(kernel='linear'), SVR(kernel='linear')
+model1.fit(X_train, y_train[:,0])
+model2.fit(X_train, y_train[:,1])
+
+y_pred = np.array([model1.predict(X_test), model2.predict(X_test)]).T
+rmse = RMSE(y_test, y_pred)
+r2 = R_squared(y_test, y_pred)
+print(f'SVM\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f} R²={r2[1]:.2f}')
+
+plot_actualVSpredicted(y_test, y_pred, 'Linear SVM', rmse, r2)
+
+
+print('\n--- rbf SVM ---')
+model1, model2 = SVR(kernel='rbf'), SVR(kernel='rbf')
 model1.fit(X_train, y_train[:,0])
 model2.fit(X_train, y_train[:,1])
 
@@ -200,6 +213,7 @@ r2 = R_squared(y_test, y_pred)
 print(f'SVM\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f} R²={r2[1]:.2f}')
 
 plot_actualVSpredicted(y_test, y_pred, 'SVM', rmse, r2)
+
 
 # Ensemble method - VotingRegressor
 print('\n--- VotingRegressor ---')
