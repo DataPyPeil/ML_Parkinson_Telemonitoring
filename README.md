@@ -11,6 +11,7 @@ The dataset used in this project contains features extracted from voice recordin
 The following machine learning models are implemented and tested:
 
 1. **Linear Methods**:
+   - Linear Regression (no penalty)
    - Lasso Regression (L1 penalty)
    - Ridge Regression (L2 penalty)
 
@@ -23,10 +24,9 @@ The following machine learning models are implemented and tested:
    - Radial Basis Function (RBF) SVM
 
 4. **Ensemble Methods**:
-   - Simple Averaging Ensemble
-   - Majority Voting Ensemble
-   - Stacking Ensemble (with a meta-learner)
    - Random Forest
+   - Simple Averaging Ensemble
+   - Stacking Ensemble (with a meta-learner)
    - AdaBoost
    - Gradient Boosting / XGBoost
 
