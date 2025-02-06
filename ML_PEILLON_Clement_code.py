@@ -184,7 +184,7 @@ for n in n_neighbors[::-1]:
     r2 = R_squared(y_test, y_pred)
     print(f'KNN\tn_neighbors={n}\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f}\tR²={r2[1]:.2f}')
     
-plot_actualVSpredicted(y_test, y_pred, 'KNN_5', rmse, r2)
+    plot_actualVSpredicted(y_test, y_pred, f'KNN_{n}', rmse, r2)
 
 # SVM Regression
 from sklearn.svm import SVR
@@ -215,11 +215,19 @@ print(f'SVM\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f} 
 plot_actualVSpredicted(y_test, y_pred, 'SVM', rmse, r2)
 
 
-# Ensemble method - VotingRegressor
+# Ensemble method - VotingRegressor - Average
 print('\n--- VotingRegressor ---')
 from sklearn.ensemble import VotingRegressor
 
-model1, model2 = VotingRegressor(), VotingRegressor()
+model_A = LinearRegression()
+model_B = KNeighborsRegressor(n_neighbors=5)
+model_C = SVR(kernel='rbf')
+
+estimators = [('linear', model_A),
+              ('KNN', model_B),
+              ('SVM', model_C)]
+
+model1, model2 = VotingRegressor(estimators=estimators), VotingRegressor(estimators=estimators)
 model1.fit(X_train, y_train[:,0])
 model2.fit(X_train, y_train[:,1])
 
@@ -228,4 +236,63 @@ rmse = RMSE(y_test, y_pred)
 r2 = R_squared(y_test, y_pred)
 print(f'SVM\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f} R²={r2[1]:.2f}')
 
-plot_actualVSpredicted(y_test, y_pred, 'SVM', rmse, r2)
+plot_actualVSpredicted(y_test, y_pred, 'VotingRegressor', rmse, r2)
+
+# RandomForest
+print('\n--- RandomForest ---')
+from sklearn.ensemble import RandomForestRegressor
+
+n_estimator=[5, 10, 50, 100]
+for n in n_estimator:
+    model = RandomForestRegressor(n_estimators=n)
+    model.fit(X_train, y_train)
+    y_pred = model.predict(X_test)
+    rmse = RMSE(y_test, y_pred)
+    r2 = R_squared(y_test, y_pred)
+    print(f'RandomForest\tn_estimator={n}\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f}\tR²={r2[1]:.2f}')
+    
+    plot_actualVSpredicted(y_test, y_pred, f'RandomForest_{n}', rmse, r2)
+    
+    
+    
+# Ensemble method - VotingRegressor - Average
+print('\n--- VotingRegressor ---')
+from sklearn.ensemble import VotingRegressor
+
+model_A = LinearRegression()
+model_B = KNeighborsRegressor(n_neighbors=5)
+model_C = SVR(kernel='rbf')
+
+estimators = [('linear', model_A),
+              ('KNN', model_B),
+              ('SVM', model_C)]
+
+model1, model2 = VotingRegressor(estimators=estimators), VotingRegressor(estimators=estimators)
+model1.fit(X_train, y_train[:,0])
+model2.fit(X_train, y_train[:,1])
+
+y_pred = np.array([model1.predict(X_test), model2.predict(X_test)]).T
+rmse = RMSE(y_test, y_pred)
+r2 = R_squared(y_test, y_pred)
+print(f'SVM\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f} R²={r2[1]:.2f}')
+
+plot_actualVSpredicted(y_test, y_pred, 'VotingRegressor', rmse, r2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
