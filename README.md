@@ -32,12 +32,12 @@ The following machine learning models are implemented and tested:
 
 ## Acknowledgments
 
-Dataset source: https://archive.ics.uci.edu/dataset/189/parkinsons+telemonitoring
+**Dataset source**: https://archive.ics.uci.edu/dataset/189/parkinsons+telemonitoring
 
 A Tsanas, MA Little, PE McSharry, LO Ramig (2009)
 'Accurate telemonitoring of Parkinson.s disease progression by non-invasive 
 speech tests',
-IEEE Transactions on Biomedical Engineering (to appear). 
+IEEE Transactions on Biomedical Engineering
 
 ## Getting Started
 
