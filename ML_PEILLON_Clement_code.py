@@ -42,6 +42,11 @@ colors=['navy','darkorange', 'lime']
 X_df.describe()
 y_df.describe()
 
+# Drop youngest -> not relevant = outlier
+ids = X_df[X_df['age'] == 36].index
+X_df = X_df.drop(index=ids)
+y_df = y_df.drop(index=ids)
+
 X  = X_df.to_numpy()
 y = y_df.to_numpy()
 
@@ -60,7 +65,7 @@ for k in range (n+2):
     else:
         plt.title(y_df.columns[k-n])
         plt.hist(y[:,k-n], color=colors[2])
-plt.savefig(plot_path / 'Feature_Distrib.png')
+# plt.savefig(plot_path / 'Feature_Distrib.png')
 plt.show()    
 
 # Répartition exponentielle --> Modifier distribution 
@@ -84,12 +89,12 @@ for k in range (n+2):
     else:
         plt.title(y_df.columns[k-n])
         plt.hist(y[:,k-n], bins=10, color=colors[2])
-plt.savefig(plot_path / 'Feature_DistribModified.png')
+# plt.savefig(plot_path / 'Feature_DistribModified.png')
 plt.show()     
 
 plt.figure(figsize=(10,10))
 sns.boxplot(X)
-plt.savefig(plot_path / 'Feature_BoxPlot.png')
+# plt.savefig(plot_path / 'Feature_BoxPlot.png')
 plt.show()
 
 
@@ -100,7 +105,7 @@ df_all = pd.DataFrame(np.concatenate((X, y), axis=1), columns=columns_xy)
 plt.figure(figsize=(15,15))
 plt.title('Matrice de corrélation', fontsize=15)
 sns.heatmap(df_all.corr(), annot=True, fmt='.2f')
-plt.savefig(plot_path / 'Feature_heatmap.png')
+# plt.savefig(plot_path / 'Feature_heatmap.png')
 plt.show()
 
 
@@ -150,7 +155,7 @@ def plot_actualVSpredicted(y_gt, y_pred, model_name, rmse, r2):
     plt.grid(color='grey', linestyle=':', linewidth=0.5)
     plt.axis('equal')
     plt.legend()
-    plt.savefig(plot_path / f'{model_name}.png')
+    # plt.savefig(plot_path / f'{model_name}.png')
     plt.show()
     
 #%% Polynomial models
@@ -308,12 +313,27 @@ for n in n_estimator:
     
     plot_actualVSpredicted(y_test, y_pred, f'GradientBoosting{n}', rmse, r2)
     
+#%% Evaluate performance
 
 
+# #%% best model optimisation
 
+# import optuna
+# from sklearn.model_selection import cross_val_score
 
+# def objective(trial):
+#     n_estimators = trial.suggest_int('n_estimators', 1, 20)
+#     max_depth = trial.suggest_int('max_depth', 5, 20)
+#     min_samples_split = trial.suggest_int('min_samples_split', 2, 10)
+    
+#     model = RandomForestRegressor(n_estimators=n_estimators,
+#                                   max_depth=max_depth,
+#                                   min_samples_split=min_samples_split)
+    
+#     score = cross_val_score(model, X_train, y_train, cv=5, scoring='neg_mean_squared_error')
+    
 
+# %time study = optuna.create_study(direction='maximize')
+# %time study.optimize(objective, n_trials=50)
 
-
-
-
+# study.best_params
