@@ -7,11 +7,13 @@ Created on Mon Feb  3 19:57:50 2025
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from pathlib import Path
 import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import MinMaxScaler
 
-
+root_path = Path(__file__)
+plot_path = root_path.parents[0] / 'plots'
 #%% IMPORT DATASET
 
 from ucimlrepo import fetch_ucirepo 
@@ -58,6 +60,7 @@ for k in range (n+2):
     else:
         plt.title(y_df.columns[k-n])
         plt.hist(y[:,k-n], color=colors[2])
+plt.savefig(plot_path / 'Feature_Distrib.png')
 plt.show()    
 
 # Répartition exponentielle --> Modifier distribution 
@@ -76,15 +79,17 @@ plt.suptitle('Histogramme de répartition de chaque paramètre\nLois exponentiel
 for k in range (n+2):
     plt.subplot(3,7,k+1)
     if k<n:
-        plt.title(X_df.columns[k])
+        plt.title(columns_modif[k])
         plt.hist(X[:,k], bins=25, color=colors[k%2])
     else:
         plt.title(y_df.columns[k-n])
         plt.hist(y[:,k-n], bins=10, color=colors[2])
+plt.savefig(plot_path / 'Feature_DistribModified.png')
 plt.show()     
 
 plt.figure(figsize=(10,10))
 sns.boxplot(X)
+plt.savefig(plot_path / 'Feature_BoxPlot.png')
 plt.show()
 
 
@@ -95,6 +100,7 @@ df_all = pd.DataFrame(np.concatenate((X, y), axis=1), columns=columns_xy)
 plt.figure(figsize=(15,15))
 plt.title('Matrice de corrélation', fontsize=15)
 sns.heatmap(df_all.corr(), annot=True, fmt='.2f')
+plt.savefig(plot_path / 'Feature_heatmap.png')
 plt.show()
 
 
@@ -108,8 +114,6 @@ X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.
 
 #%% Linear models
 
-# --> peu de correlation lineaire
-# --> do polynomial features + Linear avec Lasso et Ridge regression
 from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
@@ -153,23 +157,24 @@ def plot_actualVSpredicted(y_gt, y_pred, model_name, rmse, r2):
         plt.grid(color='grey', linestyle=':', linewidth=0.5)
         plt.axis('equal')
         plt.legend()
+    plt.savefig(plot_path / f'{model_name}.png')
     plt.show()
 
-# # Polynomial models
-# print('\n--- Polynomial models ---')
+# Polynomial models
+print('\n--- Polynomial models ---')
 
-# reg_models = {'Linear':LinearRegression(), 'Ridge':Ridge(), 'Lasso':Lasso(1e-3)}
-# # reg_models={'Lasso':Lasso(1e-2)}
+reg_models = {'Linear':LinearRegression(), 'Ridge':Ridge(), 'Lasso':Lasso(1e-3)}
+# reg_models={'Lasso':Lasso(1e-2)}
 
-# for name, reg_model in zip(reg_models.keys(), reg_models.values()):
-#     for degree in [1, 3, 5]:
-#         model = make_pipeline(PolynomialFeatures(degree), reg_model)
-#         model.fit(X_train, y_train)
-#         y_pred = model.predict(X_train)
-#         rmse = RMSE(y_train, y_pred)
-#         r2 = R_squared(y_train, y_pred)
-#         print(f'{name}\tDegree {degree}\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f}\tR²={r2[1]:.2f}')
-#         plot_actualVSpredicted(y_train, y_pred, f'{name}_{degree}', rmse, r2)
+for name, reg_model in zip(reg_models.keys(), reg_models.values()):
+    for degree in [1, 3, 5]:
+        model = make_pipeline(PolynomialFeatures(degree), reg_model)
+        model.fit(X_train, y_train)
+        y_pred = model.predict(X_train)
+        rmse = RMSE(y_train, y_pred)
+        r2 = R_squared(y_train, y_pred)
+        print(f'{name}\tDegree {degree}\ty1 -> RMSE={rmse[0]:.2f} R²={r2[0]:.2f}\ty2 -> RMSE={rmse[1]:.2f}\tR²={r2[1]:.2f}')
+        plot_actualVSpredicted(y_train, y_pred, f'{name}_{degree}', rmse, r2)
    
          
 # Non parametric KNN 
@@ -284,7 +289,7 @@ plot_actualVSpredicted(y_test, y_pred, 'StackingRegressor', rmse, r2)
 print('\n--- AdaBoost ---')
 from sklearn.ensemble import AdaBoostRegressor
 
-n_estimator=[5, 10, 50, 100]
+n_estimator=[5, 10, 500]
 for n in n_estimator:
     estimator = RandomForestRegressor(10)
     model1, model2 = AdaBoostRegressor(estimator=estimator, n_estimators=n), AdaBoostRegressor(estimator=estimator,n_estimators=n)

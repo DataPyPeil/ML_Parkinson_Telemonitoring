@@ -1,6 +1,6 @@
 # Parkinson's Disease Prediction using Machine Learning
 
-This project explores the application of various machine learning algorithms to predict Parkinson's disease using a dataset. The goal is to evaluate and compare the performance of different models to identify the most effective approach for prediction.
+This project explores and discuss the application of various machine learning algorithms to predict Parkinson's disease using a dataset. The goal is to evaluate and compare the performance of different models to identify the most effective approach for prediction.
 
 ## Dataset
 
