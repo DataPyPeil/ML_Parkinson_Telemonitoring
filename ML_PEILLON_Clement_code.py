@@ -155,7 +155,7 @@ def plot_actualVSpredicted(y_gt, y_pred, model_name, rmse, r2):
     plt.grid(color='grey', linestyle=':', linewidth=0.5)
     plt.axis('equal')
     plt.legend()
-    # plt.savefig(plot_path / f'{model_name}.png')
+    plt.savefig(plot_path / f'{model_name}.png')
     plt.show()
     
 #%% Polynomial models
@@ -312,28 +312,53 @@ for n in n_estimator:
     print(f'GradientBoosting\tn_estimator={n}\tRMSE={rmse:.2f} R²={r2:.2f}')
     
     plot_actualVSpredicted(y_test, y_pred, f'GradientBoosting{n}', rmse, r2)
+
+#%% best model optimisation
+
+import optuna
+from sklearn.model_selection import cross_val_score
+
+def objective(trial):
+    n_estimators = trial.suggest_int('n_estimators', 20, 50)
+    max_depth = trial.suggest_int('max_depth', 5, 20)
+    min_samples_split = trial.suggest_int('min_samples_split', 2, 10)
     
-#%% Evaluate performance
-
-
-# #%% best model optimisation
-
-# import optuna
-# from sklearn.model_selection import cross_val_score
-
-# def objective(trial):
-#     n_estimators = trial.suggest_int('n_estimators', 1, 20)
-#     max_depth = trial.suggest_int('max_depth', 5, 20)
-#     min_samples_split = trial.suggest_int('min_samples_split', 2, 10)
+    model = RandomForestRegressor(n_estimators=n_estimators,
+                                  max_depth=max_depth,
+                                  min_samples_split=min_samples_split)
     
-#     model = RandomForestRegressor(n_estimators=n_estimators,
-#                                   max_depth=max_depth,
-#                                   min_samples_split=min_samples_split)
+    score = cross_val_score(model, X_train, y_train, cv=5, scoring='neg_mean_squared_error')
     
-#     score = cross_val_score(model, X_train, y_train, cv=5, scoring='neg_mean_squared_error')
-    
+    return float(np.min(score))
 
-# %time study = optuna.create_study(direction='maximize')
-# %time study.optimize(objective, n_trials=50)
+%time study = optuna.create_study(direction='maximize')
+%time study.optimize(objective, n_trials=30)
 
-# study.best_params
+study.best_params
+
+best_model = RandomForestRegressor(n_estimators=study.best_params['n_estimators'],
+                                   max_depth=study.best_params['max_depth'],
+                                   min_samples_split=study.best_params['min_samples_split'])
+best_model.fit(X_train, y_train)
+y_pred = best_model.predict(X_test)
+rmse = RMSE(y_test, y_pred)
+r2 = R_squared(y_test, y_pred)
+print(f'Best RandomForest\tRMSE={rmse:.2f} R²={r2:.2f}')
+
+plot_actualVSpredicted(y_test, y_pred, f'Best RandomForest', rmse, r2)
+
+importance_df = pd.DataFrame({
+    'Feature': X_df.columns,
+    'Importance': best_model.feature_importances_
+})
+
+# Sort by importance (descending)
+importance_df = importance_df.sort_values(by='Importance', ascending=False).reset_index(drop=True)
+
+#%% Patient wise predictions
+
+""" Make predictions for a patient
+    dont split patient in X_train X_test
+    Plot the whole patient evolution i.e. total_UPDRS with respect to test_time
+    """
+
